@@ -36,6 +36,11 @@
 
 # Смешные моменты с ии
 
+<img width="673" height="100" alt="image" src="https://github.com/user-attachments/assets/fb18d933-2efa-4c4e-ae59-f6d9848aba16" />
+
+и еще
+
+<img width="669" height="122" alt="image" src="https://github.com/user-attachments/assets/3f27e6e9-8fef-49a0-858e-7f974f3f7b3e" />
 
 
 ## Что нужно
