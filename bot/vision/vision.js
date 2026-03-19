@@ -1,0 +1,26 @@
+const fs = require('fs')
+const axios = require('axios')
+
+module.exports = function (bot) {
+  async function describeImage(imagePath) {
+    const imageBase64 = fs.readFileSync(imagePath, { encoding: 'base64' })
+
+    const response = await axios.post('http://127.0.0.1:11434/api/chat', {
+      model: 'llava',
+      stream: false,
+      messages: [
+        {
+          role: 'user',
+          content: `Это скриншот из Minecraft от бота ${bot.username}. Опиши кратко, что происходит.`,
+          images: [imageBase64]
+        }
+      ]
+    })
+
+    return response.data?.message?.content?.trim()
+  }
+
+  return {
+    describeImage
+  }
+}
