@@ -34,6 +34,31 @@ module.exports = function (bot) {
   let isGathering = false
   const movements = new Movements(bot)
 
+  async function collectNearbyDrops(maxDistance = 8) {
+    const items = Object.values(bot.entities)
+      .filter(entity => {
+        if (!entity || entity.name !== 'item' || !entity.position || !entity.isValid) return false
+        return bot.entity.position.distanceTo(entity.position) <= maxDistance
+      })
+      .sort((a, b) => bot.entity.position.distanceTo(a.position) - bot.entity.position.distanceTo(b.position))
+
+    for (const item of items) {
+      if (!isGathering || !item.isValid) continue
+
+      try {
+        await bot.pathfinder.goto(new GoalNear(
+          item.position.x,
+          item.position.y,
+          item.position.z,
+          1
+        ))
+        await sleep(250)
+      } catch (err) {
+        // Ignore unreachable drops and continue gathering.
+      }
+    }
+  }
+
   async function equipBestPickaxe() {
     const pickaxes = bot.inventory.items().filter(item => item.name in PICKAXE_PRIORITY)
 
@@ -128,6 +153,8 @@ module.exports = function (bot) {
         ))
 
         await bot.dig(targetBlock)
+        await sleep(350)
+        await collectNearbyDrops(10)
       } catch (err) {
         await sleep(500)
       }
@@ -136,6 +163,7 @@ module.exports = function (bot) {
     }
 
     isGathering = false
+    await collectNearbyDrops(6)
     bot.chat('Добычу прекратил.')
   }
 
@@ -154,6 +182,7 @@ module.exports = function (bot) {
     gather,
     stopGathering,
     equipBestPickaxe,
-    equipBestAxe
+    equipBestAxe,
+    collectNearbyDrops
   }
 }

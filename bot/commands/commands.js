@@ -10,6 +10,12 @@ module.exports = function (bot, {
   vision,
   ai
 }) {
+  function callIfFunction(obj, methodName, ...args) {
+    if (!obj || typeof obj[methodName] !== 'function') return false
+    obj[methodName](...args)
+    return true
+  }
+
   bot.on('chat', async (username, message) => {
     if (username === bot.username) return
 
@@ -27,14 +33,14 @@ module.exports = function (bot, {
 
     if (result.intent === 'stop') {
       follower.stopFollowing()
-      miner.stopMiningTrees()
+      callIfFunction(miner, 'stopMiningTrees') || callIfFunction(miner, 'stopGathering')
       attacker.stopAttacking()
       gatherer.stopGathering()
       return
     }
 
     if (result.intent === 'mine_trees') {
-      miner.mineTrees()
+      callIfFunction(miner, 'mineTrees') || callIfFunction(miner, 'gather', 'wood')
       return
     }
 
@@ -95,6 +101,30 @@ module.exports = function (bot, {
 
     if (result.intent === 'gather') {
       gatherer.gather(result.target || 'stone')
+      return
+    }
+
+    if (result.intent === 'start_tunnel') {
+      tunneler.startTunneling()
+      return
+    }
+
+    if (result.intent === 'stop_tunnel') {
+      tunneler.stopTunneling()
+      return
+    }
+
+    if (result.intent === 'describe_image') {
+      try {
+        const description = await vision.describeImage(result.target || undefined)
+        if (description) {
+          bot.chat(String(description).slice(0, 200))
+        } else {
+          bot.chat('Я ничего не смог разглядеть.')
+        }
+      } catch (err) {
+        bot.chat('Не смог обработать изображение.')
+      }
       return
     }
 

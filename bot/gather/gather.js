@@ -24,7 +24,17 @@ const RESOURCE_GROUPS = {
     'oak_log', 'birch_log', 'spruce_log', 'jungle_log',
     'acacia_log', 'dark_oak_log', 'mangrove_log', 'cherry_log'
   ],
-  stone: ['stone', 'cobblestone'],
+  stone: [
+    'stone',
+    'cobblestone',
+    'deepslate',
+    'cobbled_deepslate',
+    'andesite',
+    'diorite',
+    'granite',
+    'tuff',
+    'calcite'
+  ],
   coal: ['coal_ore', 'deepslate_coal_ore'],
   iron: ['iron_ore', 'deepslate_iron_ore'],
   copper: ['copper_ore', 'deepslate_copper_ore'],
@@ -32,6 +42,22 @@ const RESOURCE_GROUPS = {
   redstone: ['redstone_ore', 'deepslate_redstone_ore'],
   diamond: ['diamond_ore', 'deepslate_diamond_ore']
 }
+
+const STONE_LIKE_BLOCKS = new Set([
+  'stone',
+  'cobblestone',
+  'deepslate',
+  'cobbled_deepslate',
+  'andesite',
+  'diorite',
+  'granite',
+  'tuff',
+  'calcite',
+  'dripstone_block',
+  'basalt',
+  'smooth_basalt',
+  'blackstone'
+])
 
 module.exports = function (bot) {
   let isGathering = false
@@ -98,6 +124,42 @@ module.exports = function (bot) {
     return await equipBestPickaxe()
   }
 
+  function matchesResource(resourceName, blockName) {
+    if (!blockName) return false
+
+    if (resourceName === 'stone') {
+      if (blockName.includes('_ore')) return false
+      if (STONE_LIKE_BLOCKS.has(blockName)) return true
+      if (blockName.endsWith('_stone') || blockName.includes('deepslate')) return true
+      return false
+    }
+
+    return RESOURCE_GROUPS[resourceName].includes(blockName)
+  }
+
+  function findNearbyFallbackBlock(resourceName) {
+    const origin = bot.entity.position.floored()
+    const candidates = []
+
+    for (let y = -1; y <= 2; y += 1) {
+      for (let x = -2; x <= 2; x += 1) {
+        for (let z = -2; z <= 2; z += 1) {
+          const block = bot.blockAt(origin.offset(x, y, z))
+          if (!block || !block.name || block.type === 0 || !block.position) continue
+          if (!matchesResource(resourceName, block.name)) continue
+          if (isUnsafeToDig(block)) continue
+
+          candidates.push(block)
+        }
+      }
+    }
+
+    if (candidates.length === 0) return null
+
+    candidates.sort((a, b) => bot.entity.position.distanceTo(a.position) - bot.entity.position.distanceTo(b.position))
+    return candidates[0]
+  }
+
   function isUnsafeToDig(block) {
     if (!block || !block.position) return true
 
@@ -162,12 +224,12 @@ module.exports = function (bot) {
       const targetBlock = bot.findBlock({
         matching: block => {
           if (!block || !block.position || !block.name) return false
-          if (!RESOURCE_GROUPS[resourceName].includes(block.name)) return false
+          if (!matchesResource(resourceName, block.name)) return false
           if (isUnsafeToDig(block)) return false
           return true
         },
-        maxDistance: 6
-      })
+        maxDistance: 16
+      }) || findNearbyFallbackBlock(resourceName)
 
       if (!targetBlock) {
         bot.chat(`${resourceName} рядом нет или копать его небезопасно.`)
