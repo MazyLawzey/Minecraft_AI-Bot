@@ -190,6 +190,23 @@
 - Умные покупки у жителей
 - Исправления багов
 
+## Скрины
+<img width="670" height="90" alt="Screenshot 2026-03-19 065847" src="https://github.com/user-attachments/assets/d82e8188-3324-4f7f-b22a-dc9db7bc01c6" />
+
+<img width="2245" height="1155" alt="Screenshot 2026-03-19 064306" src="https://github.com/user-attachments/assets/3a31d90f-1465-4b64-b456-4d5a2c0e87f8" />
+
+<img width="673" height="122" alt="Screenshot 2026-03-19 065946" src="https://github.com/user-attachments/assets/8bd6b9ad-15dd-432f-9802-e9a9e2b0133e" />
+
+<img width="673" height="100" alt="Screenshot 2026-03-19 070343" src="https://github.com/user-attachments/assets/0a643a45-2651-4c3f-a042-2351c619722e" />
+
+<img width="662" height="383" alt="Screenshot 2026-03-19 070515" src="https://github.com/user-attachments/assets/a6011e95-ef53-449a-b2e8-71d0388211c6" />
+
+<img width="669" height="122" alt="Screenshot 2026-03-19 070858" src="https://github.com/user-attachments/assets/b23b83a2-9e6d-4bc7-b8fa-7f3b616bca33" />
+
+<img width="1437" height="1046" alt="Screenshot 2026-03-19 042640" src="https://github.com/user-attachments/assets/298da30c-0c8d-497c-8bed-fe8f0d92dfc1" />
+
+
+
 ЛИЦЕНЗИЯ
 MIT - Используйте свободно!
 Дата: 2026
