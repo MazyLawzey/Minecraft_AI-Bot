@@ -1,6 +1,5 @@
 const { goals: { GoalNear } } = require('mineflayer-pathfinder')
 const { Movements } = require('mineflayer-pathfinder')
-
 const PICKAXE_PRIORITY = {
   netherite_pickaxe: 5,
   diamond_pickaxe: 4,
@@ -9,7 +8,6 @@ const PICKAXE_PRIORITY = {
   golden_pickaxe: 1,
   wooden_pickaxe: 0
 }
-
 const AXE_PRIORITY = {
   netherite_axe: 5,
   diamond_axe: 4,
@@ -18,7 +16,6 @@ const AXE_PRIORITY = {
   golden_axe: 1,
   wooden_axe: 0
 }
-
 const RESOURCE_GROUPS = {
   wood: [
     'oak_log', 'birch_log', 'spruce_log', 'jungle_log',
@@ -42,7 +39,6 @@ const RESOURCE_GROUPS = {
   redstone: ['redstone_ore', 'deepslate_redstone_ore'],
   diamond: ['diamond_ore', 'deepslate_diamond_ore']
 }
-
 const STONE_LIKE_BLOCKS = new Set([
   'stone',
   'cobblestone',
@@ -58,30 +54,23 @@ const STONE_LIKE_BLOCKS = new Set([
   'smooth_basalt',
   'blackstone'
 ])
-
 module.exports = function (bot) {
   let isGathering = false
   const movements = new Movements(bot)
-
   async function equipBestPickaxe() {
     const pickaxes = bot.inventory.items().filter(item => item.name in PICKAXE_PRIORITY)
-
     if (pickaxes.length === 0) {
       bot.chat('У меня нет кирки. Гениально.')
       return false
     }
-
     pickaxes.sort((a, b) => PICKAXE_PRIORITY[b.name] - PICKAXE_PRIORITY[a.name])
     const bestPickaxe = pickaxes[0]
-
     try {
       await bot.equip(bestPickaxe, 'hand')
       await sleep(150)
-
       if (bot.heldItem && bot.heldItem.name === bestPickaxe.name) {
         return true
       }
-
       bot.chat('Кирку взять не получилось. Очень вовремя.')
       return false
     } catch (err) {
@@ -89,26 +78,20 @@ module.exports = function (bot) {
       return false
     }
   }
-
   async function equipBestAxe() {
     const axes = bot.inventory.items().filter(item => item.name in AXE_PRIORITY)
-
     if (axes.length === 0) {
       bot.chat('У меня нет топора. Какая неожиданность.')
       return false
     }
-
     axes.sort((a, b) => AXE_PRIORITY[b.name] - AXE_PRIORITY[a.name])
     const bestAxe = axes[0]
-
     try {
       await bot.equip(bestAxe, 'hand')
       await sleep(150)
-
       if (bot.heldItem && bot.heldItem.name === bestAxe.name) {
         return true
       }
-
       bot.chat('Топор взять не получилось.')
       return false
     } catch (err) {
@@ -116,31 +99,25 @@ module.exports = function (bot) {
       return false
     }
   }
-
   async function equipBestTool(resourceName) {
     if (resourceName === 'wood') {
       return await equipBestAxe()
     }
     return await equipBestPickaxe()
   }
-
   function matchesResource(resourceName, blockName) {
     if (!blockName) return false
-
     if (resourceName === 'stone') {
       if (blockName.includes('_ore')) return false
       if (STONE_LIKE_BLOCKS.has(blockName)) return true
       if (blockName.endsWith('_stone') || blockName.includes('deepslate')) return true
       return false
     }
-
     return RESOURCE_GROUPS[resourceName].includes(blockName)
   }
-
   function findNearbyFallbackBlock(resourceName) {
     const origin = bot.entity.position.floored()
     const candidates = []
-
     for (let y = -1; y <= 2; y += 1) {
       for (let x = -2; x <= 2; x += 1) {
         for (let z = -2; z <= 2; z += 1) {
@@ -148,51 +125,37 @@ module.exports = function (bot) {
           if (!block || !block.name || block.type === 0 || !block.position) continue
           if (!matchesResource(resourceName, block.name)) continue
           if (isUnsafeToDig(block)) continue
-
           candidates.push(block)
         }
       }
     }
-
     if (candidates.length === 0) return null
-
     candidates.sort((a, b) => bot.entity.position.distanceTo(a.position) - bot.entity.position.distanceTo(b.position))
     return candidates[0]
   }
-
   function isUnsafeToDig(block) {
     if (!block || !block.position) return true
-
     const botPos = bot.entity.position
     const botX = Math.floor(botPos.x)
     const botY = Math.floor(botPos.y)
     const botZ = Math.floor(botPos.z)
-
     const blockX = Math.floor(block.position.x)
     const blockY = Math.floor(block.position.y)
     const blockZ = Math.floor(block.position.z)
-
-    // Нельзя ломать блок прямо под ногами
     if (blockX === botX && blockZ === botZ && blockY === botY - 1) {
       return true
     }
-
-    // Нельзя ломать блок, в котором стоит бот
     if (blockX === botX && blockY === botY && blockZ === botZ) {
       return true
     }
-
     return false
   }
-
   async function collectNearbyDrops() {
     const items = Object.values(bot.entities)
       .filter(entity => entity && entity.name === 'item' && entity.position)
       .sort((a, b) => bot.entity.position.distanceTo(a.position) - bot.entity.position.distanceTo(b.position))
-
     for (const item of items) {
       if (!item.isValid) continue
-
       try {
         await bot.pathfinder.goto(new GoalNear(
           item.position.x,
@@ -204,22 +167,18 @@ module.exports = function (bot) {
       } catch {}
     }
   }
-
   async function gather(resourceName) {
     if (!RESOURCE_GROUPS[resourceName]) {
       bot.chat(`Я не знаю ресурс ${resourceName}.`)
       return
     }
-
     if (isGathering) {
       bot.chat('Я уже что-то копаю. Не клонируюсь пока что.')
       return
     }
-
     isGathering = true
     bot.pathfinder.setMovements(movements)
     bot.chat(`Начинаю добывать ${resourceName}. Ну конечно, опять я.`)
-
     while (isGathering) {
       const targetBlock = bot.findBlock({
         matching: block => {
@@ -230,17 +189,13 @@ module.exports = function (bot) {
         },
         maxDistance: 16
       }) || findNearbyFallbackBlock(resourceName)
-
       if (!targetBlock) {
         bot.chat(`${resourceName} рядом нет или копать его небезопасно.`)
         break
       }
-
       await equipBestTool(resourceName)
-
       try {
         const distance = bot.entity.position.distanceTo(targetBlock.position)
-
         if (distance > 2) {
           await bot.pathfinder.goto(new GoalNear(
             targetBlock.position.x,
@@ -249,13 +204,11 @@ module.exports = function (bot) {
             1
           ))
         }
-
         if (!isGathering) break
         if (isUnsafeToDig(targetBlock)) {
           await sleep(200)
           continue
         }
-
         await bot.lookAt(targetBlock.position.offset(0.5, 0.5, 0.5), true)
         await bot.dig(targetBlock)
         await sleep(400)
@@ -263,30 +216,26 @@ module.exports = function (bot) {
       } catch (err) {
         await sleep(400)
       }
-
       await sleep(200)
     }
-
     isGathering = false
     bot.chat('Добычу прекратил.')
   }
-
   function stopGathering() {
     isGathering = false
     bot.stopDigging()
     bot.pathfinder.setGoal(null)
     bot.chat('Всё, больше не копаю.')
   }
-
   return {
     gather,
     stopGathering,
+    stop: stopGathering,  
     equipBestPickaxe,
     equipBestAxe,
     collectNearbyDrops
   }
 }
-
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }

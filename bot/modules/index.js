@@ -10,5 +10,11 @@ module.exports = {
   vehicle: require('../vehicle/vehicle.js'),
   gather: require('../gather/gather.js'),
   tunnel: require('../gather/tunnel.js'),
-  vision: require('../vision/vision.js')
+  vision: require('../vision/vision.js'),
+  survival: require('../survival/survival.js'),
+  crafting: require('../crafting/crafting.js'),
+  smartBehavior: require('../smart-behavior/smart-behavior.js'),
+  exploration: require('../exploration/exploration.js'),
+  strategy: require('../strategy/strategy.js'),
+  memory: require('../memory/memory.js')
 }
