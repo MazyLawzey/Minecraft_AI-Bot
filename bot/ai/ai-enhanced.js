@@ -104,7 +104,7 @@ module.exports = function (bot) {
         required: ['intent', 'reply', 'target', 'count', 'item']
       }
       const response = await axios.post('http:
-        model: 'gemma3:12b',
+        model: 'llama3.2',
         stream: false,
         format: schema,
         messages: [
