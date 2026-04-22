@@ -25,7 +25,15 @@ module.exports = function (bot, {
   function handleDirectCommands(username, message) {
     const msg = message.toLowerCase().trim()
 
-    if (msg === 'стой' || msg === 'stop' || msg === 'хватит') {
+    // Extract actual command if it starts with /bot
+    let actualMessage = msg
+    if (msg.startsWith('/bot ')) {
+      actualMessage = msg.substring(5).trim()
+    } else if (msg === '/bot') {
+      actualMessage = ''
+    }
+
+    if (actualMessage === 'стой' || actualMessage === 'stop' || actualMessage === 'хватит') {
       bot.chat('🛑 Останавливаю все!')
       follower.stopFollowing()
       callIfFunction(miner, 'stopMiningTrees') || callIfFunction(miner, 'stop')
@@ -37,35 +45,35 @@ module.exports = function (bot, {
       return true
     }
 
-    if (msg.includes('помощь') || msg.includes('help') || msg.includes('команды')) {
+    if (actualMessage.includes('помощь') || actualMessage.includes('help') || actualMessage.includes('команды')) {
       handleHelp()
       return true
     }
 
-    if (msg === 'статус' || msg === 'status') {
+    if (actualMessage === 'статус' || actualMessage === 'status') {
       handleStatus()
       return true
     }
 
-    if (msg.includes('рубь') || msg.includes('дерево') || msg.includes('лес')) {
+    if (actualMessage.includes('рубь') || actualMessage.includes('дерево') || actualMessage.includes('лес')) {
       bot.chat('🌳 Начинаю рубить деревья!')
       callIfFunction(gatherer, 'gather', 'wood')
       return true
     }
 
-    if (msg.includes('копай') || msg.includes('камень') || msg.includes('уголь')) {
+    if (actualMessage.includes('копай') || actualMessage.includes('камень') || actualMessage.includes('уголь')) {
       bot.chat('⛏️ Начинаю копать!')
       callIfFunction(gatherer, 'gather', 'stone')
       return true
     }
 
-    if (msg.includes('иди за') || msg.includes('follow')) {
+    if (actualMessage.includes('иди за') || actualMessage.includes('follow')) {
       bot.chat('👤 Иду за тобой!')
       follower.startFollowing(username)
       return true
     }
 
-    if (msg.includes('инвентарь') || msg.includes('inventory')) {
+    if (actualMessage.includes('инвентарь') || actualMessage.includes('inventory')) {
       inv.showInventory()
       return true
     }
@@ -73,14 +81,35 @@ module.exports = function (bot, {
     return false
   }
 
+  function shouldRespondToChat(message) {
+    // Count online players (excluding the bot itself)
+    const playerCount = Object.keys(bot.players).length
+    
+    // If 2 or fewer players total, always respond
+    if (playerCount <= 2) {
+      return true
+    }
+    
+    // If more than 2 players, only respond to /bot commands
+    return message.toLowerCase().trim().startsWith('/bot')
+  }
+
   bot.on('chat', async (username, message) => {
     if (username === bot.username) return
 
-    if (handleDirectCommands(username, message)) {
+    // Check if bot should respond based on player count
+    if (!shouldRespondToChat(message)) {
       return
     }
+
+    // Strip /bot prefix for AI processing
+    let aiMessage = message
+    if (message.toLowerCase().trim().startsWith('/bot ')) {
+      aiMessage = message.substring(5).trim()
+    }
+
     const result = await Promise.race([
-      ai.askAI(username, message),
+      ai.askAI(username, aiMessage),
       new Promise((_, reject) => 
         setTimeout(() => reject(new Error('AI timeout')), 4000)
       )
@@ -239,13 +268,19 @@ module.exports = function (bot, {
   }
 
   function handleHelp() {
-    bot.chat('=== Я умею: ===')
-    bot.chat('⬜ Идти за тобой: "иди за мной"')
-    bot.chat('⛏️ Копать: "копай" + ресурс')
-    bot.chat('🌳 Рубить деревья: "рубь деревья"')
-    bot.chat('🗡️ Атаковать: "атакуй" + враг')
-    bot.chat('🛏️ Спать: "спи"')
-    bot.chat('🗺️ Исследовать: "исследуй"')
-    bot.chat('📊 Все команды требуют руководства!')
+    const playerCount = Object.keys(bot.players).length
+    if (playerCount > 2) {
+      bot.chat('=== 👥 Много игроков! Используй /bot перед командой ===')
+      bot.chat('/bot рубь - рубить деревья')
+      bot.chat('/bot копай - копать')
+      bot.chat('/bot иди за мной - следовать')
+      bot.chat('/bot статус - статус')
+    } else {
+      bot.chat('=== 👤 Мы одни, отвечу на что угодно! ===')
+      bot.chat('рубь - рубить деревья')
+      bot.chat('копай - копать')
+      bot.chat('иди за мной - следовать')
+      bot.chat('статус - показать статус')
+    }
   }
 }

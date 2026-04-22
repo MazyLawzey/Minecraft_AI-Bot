@@ -64,11 +64,11 @@ module.exports = function (bot) {
       })
 
       const response = await axios.post('http://127.0.0.1:11434/api/generate', {
-        model: 'gemma3:12b',
+        model: 'gemma4:31b-cloud',
         prompt: prompt,
         stream: false
       }, {
-        timeout: 20000
+        timeout: 5000 // Reduced from 20s to 5s
       })
 
       let content = response.data?.response?.trim()

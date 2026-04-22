@@ -103,8 +103,8 @@ module.exports = function (bot) {
         },
         required: ['intent', 'reply', 'target', 'count', 'item']
       }
-      const response = await axios.post('http:
-        model: 'llama3.2',
+      const response = await axios.post('http://127.0.0.1:11434/api/chat', {
+        model: 'gemma4:31b-cloud',
         stream: false,
         format: schema,
         messages: [

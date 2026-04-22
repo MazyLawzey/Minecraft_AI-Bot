@@ -28,17 +28,22 @@ const RESOURCE_GROUPS = {
 }
 module.exports = function (bot) {
   let isGathering = false
+  let isMoving = false // Prevent simultaneous pathfinding
   const movements = new Movements(bot)
   async function collectNearbyDrops(maxDistance = 8) {
+    if (isMoving) return // Don't collect if currently moving
+    
     const items = Object.values(bot.entities)
       .filter(entity => {
         if (!entity || entity.name !== 'item' || !entity.position || !entity.isValid) return false
         return bot.entity.position.distanceTo(entity.position) <= maxDistance
       })
       .sort((a, b) => bot.entity.position.distanceTo(a.position) - bot.entity.position.distanceTo(b.position))
+    
     for (const item of items) {
-      if (!isGathering || !item.isValid) continue
+      if (!isGathering || !item.isValid || isMoving) break
       try {
+        isMoving = true
         await bot.pathfinder.goto(new GoalNear(
           item.position.x,
           item.position.y,
@@ -47,49 +52,45 @@ module.exports = function (bot) {
         ))
         await sleep(250)
       } catch (err) {
+        // Ignore errors
+      } finally {
+        isMoving = false
       }
     }
   }
   async function equipBestPickaxe() {
     const pickaxes = bot.inventory.items().filter(item => item.name in PICKAXE_PRIORITY)
     if (pickaxes.length === 0) {
-      bot.chat('У меня нет кирки. Отличный план: копать лицом.')
       return false
     }
     pickaxes.sort((a, b) => PICKAXE_PRIORITY[b.name] - PICKAXE_PRIORITY[a.name])
     const bestPickaxe = pickaxes[0]
     try {
       await bot.equip(bestPickaxe, 'hand')
-      await sleep(150)
+      await sleep(100)
       if (bot.heldItem && bot.heldItem.name === bestPickaxe.name) {
         return true
       }
-      bot.chat('Я вроде попытался взять кирку, но реальность против.')
       return false
     } catch (err) {
-      bot.chat(`Не смог взять кирку: ${err.message}`)
       return false
     }
   }
   async function equipBestAxe() {
     const axes = bot.inventory.items().filter(item => item.name in AXE_PRIORITY)
     if (axes.length === 0) {
-      bot.chat('У меня нет топора. Буду грызть дерево морально.')
       return false
     }
     axes.sort((a, b) => AXE_PRIORITY[b.name] - AXE_PRIORITY[a.name])
     const bestAxe = axes[0]
     try {
       await bot.equip(bestAxe, 'hand')
-      await sleep(150)
+      await sleep(100)
       if (bot.heldItem && bot.heldItem.name === bestAxe.name) {
-        bot.chat(`Взял ${bestAxe.name.replace(/_/g, ' ')}.`)
         return true
       }
-      bot.chat('Топор выбрать не получилось. Поразительно.')
       return false
     } catch (err) {
-      bot.chat(`Не смог взять топор: ${err.message}`)
       return false
     }
   }
@@ -107,6 +108,8 @@ module.exports = function (bot) {
     isGathering = true
     bot.pathfinder.setMovements(movements)
     bot.chat(`Начинаю добывать ${resourceName}.`)
+    let blocksDestroyed = 0
+    
     while (isGathering) {
       const targetBlock = bot.findBlock({
         matching: block => RESOURCE_GROUPS[resourceName].includes(block.name),
@@ -116,23 +119,42 @@ module.exports = function (bot) {
         bot.chat(`${resourceName} рядом не найден.`)
         break
       }
-      await equipBestTool(resourceName)
+      
+      if (!await equipBestTool(resourceName)) {
+        await sleep(500)
+        continue
+      }
+      
       try {
+        isMoving = true
         await bot.pathfinder.goto(new GoalNear(
           targetBlock.position.x,
           targetBlock.position.y,
           targetBlock.position.z,
           1
         ))
+        isMoving = false
+        
+        // Dig the block
         await bot.dig(targetBlock)
-        await sleep(350)
-        await collectNearbyDrops(10)
+        blocksDestroyed++
+        await sleep(200)
+        
+        // Collect drops only if not too many blocks destroyed (don't spam)
+        if (blocksDestroyed % 5 === 0) {
+          await collectNearbyDrops(8)
+        }
       } catch (err) {
-        await sleep(500)
+        isMoving = false
+        // Silently ignore errors and retry
+        await sleep(300)
       }
-      await sleep(300)
+      await sleep(100)
     }
+    
     isGathering = false
+    isMoving = false
+    await sleep(500)
     await collectNearbyDrops(6)
     bot.chat('Добычу прекратил.')
   }

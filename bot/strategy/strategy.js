@@ -1,7 +1,7 @@
 module.exports = function (bot, modules) {
   let currentStrategy = 'survive'
   let strategySwitchTime = Date.now()
-  const STRATEGY_DURATION = 60000 
+  const STRATEGY_DURATION = 120000
   const strategies = {
     'survive': handleSurvival,
     'gather': handleGatherStrategy,
@@ -10,23 +10,18 @@ module.exports = function (bot, modules) {
     'hunt': handleHuntStrategy
   }
   let strategyInterval = null
+  let isActivelyExecuting = false
+  
+  // Disable automatic strategy loop - only run on manual command
   bot.once('spawn', () => {
-    strategyInterval = setInterval(() => {
-      updateStrategy()
-    }, 5000)
+    // Do nothing - strategy is now command-based only
   })
+
   async function updateStrategy() {
-    try {
-      if (Date.now() - strategySwitchTime > STRATEGY_DURATION) {
-        currentStrategy = selectBestStrategy()
-        strategySwitchTime = Date.now()
-      }
-      const strategyHandler = strategies[currentStrategy]
-      if (strategyHandler) {
-        await strategyHandler()
-      }
-    } catch (e) {
-      console.error('Strategy error:', e.message)
+    // Passive only - don't interfere with active tasks
+    if (Date.now() - strategySwitchTime > STRATEGY_DURATION) {
+      currentStrategy = selectBestStrategy()
+      strategySwitchTime = Date.now()
     }
   }
   function selectBestStrategy() {
@@ -40,7 +35,10 @@ module.exports = function (bot, modules) {
     return 'gather'
   }
   async function handleSurvival() {
-    console.log('📊 Strategy: Survival')
+    // Only log occasionally, not every check
+    if (Math.random() < 0.1) {
+      console.log('📊 Strategy: Survival')
+    }
     if (bot.health < 5) {
       bot.chat('⚠️ Критическое здоровье! Спасаюсь!')
     }
