@@ -1,4 +1,4 @@
-# 🤖 MINECRAFT AI BOT 1.2 - УЛУЧШЕННАЯ ВЕРСИЯ
+# 🤖 MINECRAFT AI BOT 1.3 - УЛУЧШЕННАЯ ВЕРСИЯ
 
 ## НОВЫЕ ВОЗМОЖНОСТИ УМНОГО БОТА
 
@@ -135,7 +135,7 @@
 1. Убедитесь, что установлен:
    - Node.js 14+
    - Minecraft сервер (локальный или удалённый)
-   - Ollama + llama3.1:8b модель
+   - Ollama + gemma2 модель
 
 2. Установите зависимости:
    npm install
@@ -144,7 +144,7 @@
    MC_HOST=localhost
    MC_PORT=25565
    MC_USERNAME=BotName
-   MC_VERSION=1.20.4
+   MC_VERSION= ВАША ВЕРСИЯ
 
 4. Запустите:
    node bot.js
