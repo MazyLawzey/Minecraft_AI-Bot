@@ -4,7 +4,7 @@ module.exports = {
   mine: require('../mine/mine.js'),
   inventory: require('../inventory/inventory.js'),
   attack: require('../attack/attack.js'),
-  ai: require('../ai/ai.js'),
+  ai: require('../ai/ai-enhanced.js'),
   commands: require('../commands/commands.js'),
   sleep: require('../sleep/sleep.js'),
   vehicle: require('../vehicle/vehicle.js'),

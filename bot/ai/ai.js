@@ -1,10 +1,23 @@
 const axios = require('axios')
+const fs = require('fs')
+const path = require('path')
 
 module.exports = function (bot) {
   const history = []
   const requestQueue = []
   let processingRequest = false
   const MAX_QUEUE_SIZE = 5
+
+  // Load prompts from file
+  let basicPrompt = ''
+  try {
+    const promptsPath = path.join(__dirname, 'prompts.txt')
+    const content = fs.readFileSync(promptsPath, 'utf8')
+    const basicMatch = content.match(/=== BASIC PROMPT.*?\n([\s\S]*?)(?===|$)/)
+    basicPrompt = basicMatch ? basicMatch[1].trim() : ''
+  } catch (err) {
+    console.error('Не удалось загрузить prompts.txt:', err.message)
+  }
 
   async function processQueue() {
     if (processingRequest || requestQueue.length === 0) return
@@ -51,10 +64,7 @@ module.exports = function (bot) {
 
   async function processAIRequest(username, message) {
     try {
-      const systemPrompt = `Ты бот в Minecraft. Игрок: ${username}. Отвечай ТОЛЬКО JSON. Вот примеры:
-{"intent":"chat","reply":"привет! 👋"}
-{"intent":"stop","reply":"стоп!","target":null,"count":null,"item":null}
-{"intent":"mine_trees","reply":"начинаю рубить дерево","target":"oak_log","count":5,"item":null}`
+      const systemPrompt = basicPrompt.replace('{USERNAME}', username)
 
       let prompt = systemPrompt + '\n\nИгрок: ' + message + '\nОтвет:'
 
@@ -64,7 +74,7 @@ module.exports = function (bot) {
       })
 
       const response = await axios.post('http://127.0.0.1:11434/api/generate', {
-        model: 'gemma4:31b-cloud',
+        model: 'gemma2',
         prompt: prompt,
         stream: false
       }, {

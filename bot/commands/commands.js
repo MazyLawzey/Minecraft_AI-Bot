@@ -24,14 +24,7 @@ module.exports = function (bot, {
 
   function handleDirectCommands(username, message) {
     const msg = message.toLowerCase().trim()
-
-    // Extract actual command if it starts with /bot
     let actualMessage = msg
-    if (msg.startsWith('/bot ')) {
-      actualMessage = msg.substring(5).trim()
-    } else if (msg === '/bot') {
-      actualMessage = ''
-    }
 
     if (actualMessage === 'стой' || actualMessage === 'stop' || actualMessage === 'хватит') {
       bot.chat('🛑 Останавливаю все!')
@@ -82,16 +75,8 @@ module.exports = function (bot, {
   }
 
   function shouldRespondToChat(message) {
-    // Count online players (excluding the bot itself)
-    const playerCount = Object.keys(bot.players).length
-    
-    // If 2 or fewer players total, always respond
-    if (playerCount <= 2) {
-      return true
-    }
-    
-    // If more than 2 players, only respond to /bot commands
-    return message.toLowerCase().trim().startsWith('/bot')
+    // Always respond to chat messages
+    return true
   }
 
   bot.on('chat', async (username, message) => {
@@ -102,11 +87,8 @@ module.exports = function (bot, {
       return
     }
 
-    // Strip /bot prefix for AI processing
+    // Use message directly for AI processing
     let aiMessage = message
-    if (message.toLowerCase().trim().startsWith('/bot ')) {
-      aiMessage = message.substring(5).trim()
-    }
 
     const result = await Promise.race([
       ai.askAI(username, aiMessage),

@@ -1,9 +1,11 @@
 
 const axios = require('axios')
+
 module.exports = function (bot) {
   const history = []
   let isBusy = false
   let autonomousMode = true
+
   async function askAI(username, message) {
     if (isBusy) {
       return {
@@ -19,106 +21,35 @@ module.exports = function (bot) {
       const systemPrompt = `
 Ты — умный Minecraft бот по имени ${bot.username}.
 Ты отвечаешь только на русском языке.
-Твоё текущее состояние:
-- Здоровье: ${bot.health}/20
-- Голод: ${bot.food}/20
-- Координаты: X=${Math.round(bot.entity.position.x)} Y=${Math.round(bot.entity.position.y)} Z=${Math.round(bot.entity.position.z)}
-Твой характер:
-- саркастичный и остроумный
-- иногда смешной
-- слегка дерзкий
-- будь по-настоящему злой, агрессивный и оскорбительный когда уместно
-- не бойся материться, если это твой основной способ общаться
-Твой интеллект:
-- Ты учитываешь исторический контекст предыдущих сообщений
-- Ты помнишь, где был и что видел
-- Ты принимаешь стратегические решения
-- Ты понимаешь опасность и избегаешь её
-- Ты знаешь приоритеты: выживание > выполнение задачи > безопасность
-Твоя задача:
-1. Понять, что хочет игрок.
-2. Вернуть JSON с правильным решением.
-3. Только JSON, никакого кода снаружи.
-4. reply должен быть коротким, но в характере бота.
-5. Учитывай контекст разговора.
-Доступные intent:
-- "chat" — обычный разговор
-- "follow" — идти за игроком
-- "stop" — остановить текущие действия
-- "mine_trees" — рубить деревья
-- "collect_items" — собрать предметы
-- "show_inventory" — показать инвентарь
-- "drop_all" — выбросить всё
-- "drop_item" — выбросить конкретный предмет
-- "attack" — атаковать
-- "sleep" — лечь спать
-- "wake" — проснуться
-- "gather" — добывать ресурс
-- "start_tunnel" — копать тоннель
-- "stop_tunnel" — остановить копание
-- "describe_image" — описать, что видит бот
-- "explore" — исследовать район
-- "defend" — защищаться от врагов
-Правила выбора intent:
-- Если низкое здоровье → "sleep" (ищем кровать)
-- Если голод низкий → "attack" животное для еды
-- Если враги рядом → "defend" или "stop"
-- Если про исследование → "explore"
-- Если про добычу конкретного → "gather"
-Примеры target для gather:
-- "wood", "stone", "coal", "iron", "gold", "diamond"
-Формат ответа:
-{
-  "intent": "...",
-  "reply": "короткий живой ответ",
-  "target": null или строка,
-  "count": null или число,
-  "item": null или строка
-}
-Требования:
-- Валидный JSON ВСЕГДА
-- Все поля обязательны (даже если = null)
-- reply максимум 2 предложения
-- Иногда сарказм или шутка
+Твоя задача: Вернуть JSON с правильным решением. ТОЛЬКО JSON.
+Примеры:
+{"intent":"chat","reply":"привет!","target":null,"count":null,"item":null}
+{"intent":"mine_trees","reply":"рубим!","target":"wood","count":5,"item":null}
       `.trim()
+
+      console.log('📤 Отправляю AI запрос...')
       history.push({
         role: 'user',
         content: `${username}: ${message}`
       })
-      const schema = {
-        type: 'object',
-        properties: {
-          intent: {
-            type: 'string',
-            enum: [
-              'chat', 'follow', 'stop', 'mine_trees', 'collect_items', 'show_inventory',
-              'drop_all', 'drop_item', 'attack', 'sleep', 'wake', 'gather', 'start_tunnel',
-              'stop_tunnel', 'describe_image', 'explore', 'defend'
-            ]
-          },
-          reply: { type: 'string' },
-          target: { type: ['string', 'null'] },
-          count: { type: ['number', 'null'] },
-          item: { type: ['string', 'null'] }
-        },
-        required: ['intent', 'reply', 'target', 'count', 'item']
-      }
+
+      const startTime = Date.now()
       const response = await axios.post('http://127.0.0.1:11434/api/chat', {
-        model: 'gemma4:31b-cloud',
+        model: 'gemma2',
         stream: false,
-        format: schema,
         messages: [
           { role: 'system', content: systemPrompt },
           ...history.slice(-14)
         ],
         options: {
-          temperature: 0.8,
-          top_p: 0.9,
-          num_predict: 150
+          temperature: 0.5,
+          num_predict: 80
         }
       }, {
-        timeout: 30000
+        timeout: 180000
       })
+      const elapsed = Date.now() - startTime
+      console.log(`✅ AI ответил за ${elapsed}ms`)
       const content = response.data?.message?.content?.trim()
       if (!content) {
         return {
@@ -129,7 +60,41 @@ module.exports = function (bot) {
           item: null
         }
       }
-      const parsed = JSON.parse(content)
+
+      let parsed
+      try {
+        // Try direct JSON parse
+        parsed = JSON.parse(content)
+        console.log('✅ JSON распарсен напрямую')
+      } catch (e) {
+        console.log('❌ Прямой JSON не сработал, пробую извлечь...')
+        // Try to extract JSON from markdown code blocks
+        const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/)
+        if (jsonMatch) {
+          try {
+            parsed = JSON.parse(jsonMatch[1].trim())
+            console.log('✅ JSON извлечен из markdown блока')
+          } catch {
+            // Try to find any JSON object in the response
+            const objMatch = content.match(/\{[\s\S]*\}/)
+            if (objMatch) {
+              parsed = JSON.parse(objMatch[0])
+              console.log('✅ JSON найден в тексте')
+            } else {
+              throw new Error('No JSON found')
+            }
+          }
+        } else {
+          // Try to find any JSON object in the response
+          const objMatch = content.match(/\{[\s\S]*\}/)
+          if (objMatch) {
+            parsed = JSON.parse(objMatch[0])
+            console.log('✅ JSON найден в тексте')
+          } else {
+            throw new Error('No JSON found')
+          }
+        }
+      }
       history.push({
         role: 'assistant',
         content

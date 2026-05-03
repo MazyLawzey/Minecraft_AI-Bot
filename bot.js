@@ -38,7 +38,7 @@ function createBot() {
 
   bot.once('spawn', () => {
     console.log('✅ Бот подключен! Слушаю команды.')
-    console.log('Используй /bot [команда] или просто команду если ты один.')
+    console.log('Просто пиши команды - бот будет отвечать на все сообщения.')
     connectionAttempts = 0
     initializeModules()
   })
