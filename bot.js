@@ -1,6 +1,7 @@
 const mineflayer = require('mineflayer')
 const { pathfinder } = require('mineflayer-pathfinder')
 const dotenv = require('dotenv')
+const crypto = require('crypto')
 
 dotenv.config()
 
@@ -9,11 +10,15 @@ let connectionAttempts = 0
 const MAX_RETRY_ATTEMPTS = 0 // Infinite retries
 
 function createBot() {
+  const signingKey = crypto.generateKeyPairSync('ed25519').privateKey
+
   bot = mineflayer.createBot({
     host: process.env.MC_HOST,
     port: parseInt(process.env.MC_PORT),
     username: process.env.MC_USERNAME,
-    version: process.env.MC_VERSION
+    version: process.env.MC_VERSION,
+    chatSigned: true,
+    signingKey: signingKey
   })
 
   bot.loadPlugin(pathfinder)

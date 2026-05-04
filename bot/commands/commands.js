@@ -16,6 +16,10 @@ module.exports = function (bot, {
   memory,
   strategy
 }) {
+  function sanitizeMessage(msg) {
+    // Удалить управляющие символы и заменить потенциально проблемные символы на безопасные
+    return msg.replace(/[\x00-\x1F\x7F-\x9F]/g, '').replace(/[^\x00-\x7F\u0400-\u04FF\s\!\?\.\,\:\;\-\+\=\*\(\)\[\]\{\}]/g, '?');
+  }
   function callIfFunction(obj, methodName, ...args) {
     if (!obj || typeof obj[methodName] !== 'function') return false
     obj[methodName](...args)
@@ -104,7 +108,7 @@ module.exports = function (bot, {
     if (!result) return
 
     if (result.reply) {
-      bot.chat(String(result.reply).slice(0, 200))
+      bot.chat(sanitizeMessage(String(result.reply).slice(0, 200)))
     }
 
     if (result.intent === 'follow') {
@@ -199,7 +203,7 @@ module.exports = function (bot, {
       try {
         const description = await vision.describeImage(result.target || undefined)
         if (description) {
-          bot.chat(String(description).slice(0, 200))
+          bot.chat(sanitizeMessage(String(description).slice(0, 200)))
         } else {
           bot.chat('Я ничего не смог разглядеть.')
         }

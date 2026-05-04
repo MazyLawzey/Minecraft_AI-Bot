@@ -8,6 +8,11 @@ module.exports = function (bot) {
   let processingRequest = false
   const MAX_QUEUE_SIZE = 5
 
+  function sanitizeMessage(msg) {
+    // Удалить управляющие символы и заменить потенциально проблемные символы на безопасные
+    return msg.replace(/[\x00-\x1F\x7F-\x9F]/g, '').replace(/[^\x00-\x7F\u0400-\u04FF\s\!\?\.\,\:\;\-\+\=\*\(\)\[\]\{\}]/g, '?');
+  }
+
   // Load prompts from file
   let basicPrompt = ''
   try {
@@ -86,7 +91,7 @@ module.exports = function (bot) {
       if (!content) {
         return {
           intent: 'chat',
-          reply: '🤔',
+          reply: 'Думаю',
           target: null,
           count: null,
           item: null
@@ -103,7 +108,7 @@ module.exports = function (bot) {
         } else {
           return {
             intent: 'chat',
-            reply: content.slice(0, 100),
+            reply: sanitizeMessage(content.slice(0, 100)),
             target: null,
             count: null,
             item: null
@@ -137,7 +142,7 @@ module.exports = function (bot) {
   function normalizeResponse(data) {
     return {
       intent: data.intent || 'chat',
-      reply: data.reply || 'Ну да.',
+      reply: sanitizeMessage(data.reply || 'Ну да.'),
       target: data.target ?? null,
       count: typeof data.count === 'number' ? data.count : null,
       item: data.item ?? null
