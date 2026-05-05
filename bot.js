@@ -69,6 +69,7 @@ function initializeModules() {
   const strategy = modules.strategy(bot, { 
     follower, miner, inv, attacker, sleeper, vehicle, gatherer, tunneler, vision, survival, crafting, exploration, memory
   })
+  const telegram = modules.telegram(bot, ai)
 
   modules.speech(bot)
   modules.commands(bot, {
@@ -86,8 +87,12 @@ function initializeModules() {
     crafting,
     exploration,
     memory,
-    strategy
+    strategy,
+    telegram
   })
+
+  // Передаем Telegram в другие модули для отправки уведомлений
+  global.telegram = telegram
 }
 
 createBot()

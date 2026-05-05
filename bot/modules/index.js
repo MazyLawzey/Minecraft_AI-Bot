@@ -1,10 +1,18 @@
+// Регистрируем ts-node для поддержки TypeScript
+require('ts-node').register({
+  transpileOnly: true,
+  compilerOptions: {
+    module: 'commonjs'
+  }
+})
+
 module.exports = {
   speech: require('../speech/speech.js'),
   follow: require('../follow/follow.js'),
   mine: require('../mine/mine.js'),
   inventory: require('../inventory/inventory.js'),
   attack: require('../attack/attack.js'),
-  ai: require('../ai/ai-enhanced.js'),
+  ai: require('../ai/ai-enhanced.ts'),
   commands: require('../commands/commands.js'),
   sleep: require('../sleep/sleep.js'),
   vehicle: require('../vehicle/vehicle.js'),
@@ -16,5 +24,6 @@ module.exports = {
   smartBehavior: require('../smart-behavior/smart-behavior.js'),
   exploration: require('../exploration/exploration.js'),
   strategy: require('../strategy/strategy.js'),
-  memory: require('../memory/memory.js')
+  memory: require('../memory/memory.js'),
+  telegram: require('../telegram/telegram.js')
 }

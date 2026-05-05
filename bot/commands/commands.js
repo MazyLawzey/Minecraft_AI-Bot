@@ -107,6 +107,13 @@ module.exports = function (bot, {
 
     if (!result) return
 
+    // Новый формат: просто текст вместо JSON
+    if (typeof result === 'string') {
+      bot.chat(sanitizeMessage(result.slice(0, 200)))
+      return
+    }
+
+    // Старый формат для совместимости (если вернётся объект)
     if (result.reply) {
       bot.chat(sanitizeMessage(String(result.reply).slice(0, 200)))
     }
