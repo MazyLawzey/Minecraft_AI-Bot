@@ -205,6 +205,13 @@
 
 <img width="1437" height="1046" alt="Screenshot 2026-03-19 042640" src="https://github.com/user-attachments/assets/298da30c-0c8d-497c-8bed-fe8f0d92dfc1" />
 
+### Телеграмм скрины
+
+<img width="366" height="159" alt="image" src="https://github.com/user-attachments/assets/e6750727-2be8-446a-a48c-747c2a48b5f2" />
+
+
+<img width="370" height="138" alt="image" src="https://github.com/user-attachments/assets/a7c00304-6dcc-40f4-96f9-d471c509f396" />
+
 
 
 ЛИЦЕНЗИЯ
